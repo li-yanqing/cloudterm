@@ -9207,7 +9207,7 @@ hterm.ScrollPort.prototype.decorate = function (div) {
     var style = doc.createElement('style');
     style.textContent = 'x-row {}';
     doc.head.appendChild(style);
-
+    
     this.xrowCssRule_ = doc.styleSheets[0].cssRules[0];
     this.xrowCssRule_.style.display = 'block';
 
@@ -12372,6 +12372,15 @@ hterm.Terminal.prototype.setAbsoluteCursorRow = function (row) {
  */
 hterm.Terminal.prototype.getCursorRow = function (row) {
     return this.screen_.cursorPosition.row;
+};
+
+/**
+ * Return the cursor row.
+ *
+ * @return {integer} The zero-based cursor row.
+ */
+hterm.Terminal.prototype.getAbsoluteCursorRow = function () {
+    return this.scrollbackRows_.length + this.screen_.cursorPosition.row;
 };
 
 /**

@@ -1,7 +1,15 @@
 hterm.defaultStorage = new lib.Storage.Memory();
 
+
 var t = new hterm.Terminal("cloudterm");
 
+
+//initialize controller
+var controller = new AutocompleteController(t);
+
+
+
+t.setWraparound(true);
 t.getPrefs().set("send-encoding", "utf-8");
 t.getPrefs().set("receive-encoding", "utf-8");
 
@@ -27,7 +35,9 @@ t.onTerminalReady = function () {
     var io = t.io.push();
 
     io.onVTKeystroke = function (str) {
-        app.onCommand(str);
+    	if(controller.onKeyDown(str)){
+			app.onCommand(str);
+    	}
     };
 
     io.sendString = io.onVTKeystroke;
@@ -61,6 +71,7 @@ ws.onmessage = (e) => {
     switch (data.type) {
         case "TERMINAL_PRINT":
             t.io.print(data.text);
+        	controller.print(data.text);
     }
 }
 
@@ -88,5 +99,6 @@ let app = {
     },
     onTerminalReady() {
         ws.send(action("TERMINAL_READY"));
+        controller.onTerminalReady();
     }
 };
