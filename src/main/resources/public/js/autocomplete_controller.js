@@ -1,7 +1,8 @@
 
-AutocompleteController = function(terminal){
+AutocompleteController = function(terminal, cloudterm){
 	//hterm.Terminal
 	this.term = terminal;
+	this.cloudterm = cloudterm;
 	
 
 	this.minLen = 2;
@@ -22,62 +23,37 @@ AutocompleteController = function(terminal){
 }
 
 AutocompleteController.prototype.onTerminalReady = function(){
-	//insert hidden text into cursor
-//	this.input = $('<input type="text" class="typeahead"  />');
-//	this.input.appendTo(this.term.cursorNode_);
-//	this.input.hide();
-//	this.input.on("change", function() {
-//		  console.log( $( this ).text() );
-//	});
+	var that = this;
 	
 	this.input = $(this.term.cursorNode_)
-
-	
-	
 	
 	//connect to jquery autocomplete
 	this.input.autocomplete({
 		lookup: function (query, done) {
-	        // Do Ajax call or lookup locally, when done,
-	        // call the callback and pass your results:
-	        var result = {
-	            suggestions: [
-	                { "value": "United Arab Emirates", "data": "AE" },
-	                { "value": "United Kingdom",       "data": "UK" },
-	                { "value": "United States",        "data": "US" }
-	            ]
-	        };
-
-	        done(result);
+			that.engine.search(query, function(data) {
+				var result = { suggestions: [ ] };
+				data.forEach(function(v){
+					result.suggestions.push({'value':v, 'data':v});
+				});
+				console.log('local data:' + result);
+				done(result);
+			});
 	    },
 		onSelect: function (suggestion) {
-			console.log('You selected: ' + suggestion.value + ', ' + suggestion.data);
+//			console.log('You selected: ' + suggestion.value + ', ' + suggestion.data);
+			that.changeKeyword2Selection(suggestion.value);
 		},
 		orientation:'auto',
-		width:150
-	})
-
+		minChars: this.minLen,
+		triggerSelectOnValidInput:false,
+		width:180
+	});
 	
-	//connect to typeahead
-//	this.input.typeahead({
-//		  minLength: 1,
-//		  highlight: true
-//		},
-//		{
-//		  name: 'my-dataset',
-//		  source: this.searchInBloodhound
-//		});
-}
+	this.input.on('blur.autocomplete', function () {
+		// TODO Does it work?
+		console.log("on blur");
+	});
 
-AutocompleteController.prototype.searchInjQuery = function(){
-	return ['dog','dogs','dorse','dotest','do loooooooooong text'];
-
-}
-
-
-AutocompleteController.prototype.searchInBloodhound = function(query, syncResults, asyncResults){
-//	console.log(query + " " + syncResults + " " + asyncResults);
-	syncResults(['dog','dogs','dorse','dotest','do loooooooooong text']);
 }
 
 
@@ -85,12 +61,42 @@ AutocompleteController.prototype.searchInBloodhound = function(query, syncResult
  * return false to stop key event
  */
 AutocompleteController.prototype.onKeyDown = function(key){
-//	this.input.typeahead('val', 'dog');
-//	this.input.typeahead('open');
-	this.input.val('un');
-	console.log(this.input.val());
-	this.input.autocomplete('onFocus');
-	this.input.autocomplete('moveUp');
+	var keys = {
+	            ESC: "\x1b",
+	            TAB: "\t",
+	            RETURN: "\r",
+	            LEFT: "\x1b[D",
+	            UP: "\x1b[A",
+	            RIGHT: "\x1b[C",
+	            DOWN: "\x1b[B"
+	        };
+	 
+	//mapping up down when suggestions are shown.
+	if(this.input.autocomplete().visible){
+		switch (key) {
+		case keys.UP:
+			this.input.autocomplete('moveUp');
+			return false;
+		case keys.ESC:
+			this.input.autocomplete('hide');
+			return false;
+		case keys.DOWN:
+			this.input.autocomplete('moveDown');
+			return false;
+		case keys.RETURN:
+			if(this.input.autocomplete().selectedIndex == -1){
+				//when no choice
+				this.input.autocomplete('hide');
+				return true;
+			}else{
+				this.input.autocomplete('select', this.input.autocomplete().selectedIndex);
+			}
+			return false;
+		default:
+			break;
+		}
+		
+	}
 	return true;
 }
 
@@ -114,18 +120,32 @@ AutocompleteController.prototype.print = function(textFromServer){
     this.addTrack(text);
 
     var isShowOptions = this.isShowOptions();
-    console.log('isShowOptions: ' + isShowOptions);
+//    console.log('isShowOptions: ' + isShowOptions);
 
     var arr = text.split(/\s+/);
-    var keyword = arr[arr.length -1];
-    console.log('keyword:' + keyword);
+    this.keywordToken = arr[arr.length -1];
+//    console.log('keyword:' + keyword);
 
     if(isShowOptions){
-        this.engine.search(keyword,function(data){
-            console.log('local data:' + data);
-        });
+    	this.input.val(this.keywordToken);
+    	this.input.autocomplete('onFocus');
     }
 
+}
+
+AutocompleteController.prototype.changeKeyword2Selection = function(newvalue){
+	// stop autocomplete for a while
+	this.input.autocomplete('disable');
+	// send backspace x keyword.length
+	var len = this.keywordToken.length;
+	for (var i = 0; i < len; i++) {
+		this.cloudterm.onCommand('\x7f');
+	}
+	// input new value
+	this.cloudterm.onCommand(newvalue);
+	// re-enable autocomplete
+	this.input.autocomplete('enable');
+	
 }
 
 AutocompleteController.prototype.addDataToIndex = function(tokens){

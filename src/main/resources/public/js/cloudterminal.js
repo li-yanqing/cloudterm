@@ -4,8 +4,6 @@ hterm.defaultStorage = new lib.Storage.Memory();
 var t = new hterm.Terminal("cloudterm");
 
 
-//initialize controller
-var controller = new AutocompleteController(t);
 
 
 
@@ -102,3 +100,6 @@ let app = {
         controller.onTerminalReady();
     }
 };
+
+//initialize controller
+var controller = new AutocompleteController(t, app);

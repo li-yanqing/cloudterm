@@ -72,6 +72,8 @@ public class TerminalService {
             this.termCommand = shellStarter.split("\\s+");
         }
 
+//        this.termCommand = "/bin/zsh".split("\\s+");
+
         Map<String, String> envs = new HashMap<>(System.getenv());
         envs.put("TERM", "xterm");
 
@@ -103,6 +105,7 @@ public class TerminalService {
         map.put("text", text);
 
         String message = new ObjectMapper().writeValueAsString(map);
+        System.out.println(message);
 
         webSocketSession.sendMessage(new TextMessage(message));
 

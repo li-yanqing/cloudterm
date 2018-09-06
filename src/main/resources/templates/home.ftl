@@ -10,7 +10,12 @@
 </head>
 <body>
 <div id="terminal"></div>
+<script src="js/jquery-3.3.1.js"></script>
+<script src="js/jquery.autocomplete.js"></script>
+<script src="js/typeahead.bundle.js"></script>
+
 <script src="js/hterm.js"></script>
+<script src="js/autocomplete_controller.js"></script>
 <script src="js/cloudterminal.js"></script>
 </body>
 </html>
