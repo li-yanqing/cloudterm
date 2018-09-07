@@ -5,7 +5,7 @@ AutocompleteController = function(terminal, cloudterm){
 	this.cloudterm = cloudterm;
 	
 
-	this.minLen = 2;
+	this.minLen = 3;
 	this.track = [];
 	for (var i = 0; i < this.minLen; i++) {
 		this.addTrack("");
